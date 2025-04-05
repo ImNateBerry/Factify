@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadingIndicator = document.getElementById('loading-indicator');
   const reasoningContent = document.getElementById('reasoning-content');
   const citationsList = document.getElementById('citations-list');
+  const scanWebpageButton = document.getElementById('scan-webpage-button');
 
   // Function to check if API key exists
   function checkApiKey() {
@@ -48,14 +49,22 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Get the selected text and analyze with Perplexity API
   function getSelectedTextAndAnalyze(apiKey) {
-    chrome.storage.local.get(['selectedText', 'shouldAnalyze'], (data) => {
+    chrome.storage.local.get(['selectedText', 'shouldAnalyze', 'analysisResults'], (data) => {
       const selectedText = data.selectedText || 'No text selected.';
       document.getElementById('selected-text').textContent = selectedText;
-      
+
+      // Check if analysis results already exist for the selected text
+      if (data.analysisResults && data.analysisResults[selectedText]) {
+        displayResults(data.analysisResults[selectedText]);
+        factCheckContainer.style.display = 'block';
+        loadingIndicator.style.display = 'none';
+        return;
+      }
+
       if (selectedText && selectedText !== 'No text selected.' && data.shouldAnalyze) {
         loadingIndicator.style.display = 'block';
         factCheckContainer.style.display = 'none';
-        
+
         // Reset the shouldAnalyze flag to prevent re-analyzing on panel reopen
         chrome.storage.local.set({ shouldAnalyze: false }, () => {
           analyzeWithPerplexity(selectedText, apiKey);
@@ -118,7 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Received API response:', data);
         loadingIndicator.style.display = 'none';
         factCheckContainer.style.display = 'block';
-        
+
+        // Save the analysis results in chrome.storage.local
+        chrome.storage.local.get('analysisResults', (storageData) => {
+          const analysisResults = storageData.analysisResults || {};
+          analysisResults[text] = data;
+          chrome.storage.local.set({ analysisResults }, () => {
+            console.log('Analysis results saved.');
+          });
+        });
+
         displayResults(data);
       })
       .catch(error => {
@@ -208,7 +226,46 @@ document.addEventListener('DOMContentLoaded', () => {
     return formatted;
   }
   
+  // Function to scan all text on the webpage
+  function scanWebpage(apiKey) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tabs[0].id },
+            func: () => document.body.innerText, // Extract all text from the webpage
+          },
+          (results) => {
+            if (results && results[0] && results[0].result) {
+              const webpageText = results[0].result.trim();
+              if (webpageText) {
+                document.getElementById('selected-text').textContent = 'Analyzing webpage content...';
+                loadingIndicator.style.display = 'block';
+                factCheckContainer.style.display = 'none';
+                analyzeWithPerplexity(webpageText, apiKey);
+              } else {
+                alert('No text found on the webpage.');
+              }
+            }
+          }
+        );
+      }
+    });
+  }
+
+  // Add event listener to the scan webpage button
+  if (scanWebpageButton) {
+    scanWebpageButton.addEventListener('click', () => {
+      chrome.storage.local.get('perplexityApiKey', (data) => {
+        if (data.perplexityApiKey) {
+          scanWebpage(data.perplexityApiKey);
+        } else {
+          alert('Please enter your API key first.');
+        }
+      });
+    });
+  }
+
   // Initialize
   checkApiKey();
 });
-  

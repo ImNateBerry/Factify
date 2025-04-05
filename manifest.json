@@ -15,6 +15,9 @@
         "storage",
         "contextMenus"
     ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
     "background": {
         "service_worker": "scripts/background.js"
     },
@@ -33,5 +36,5 @@
     ],
     "side_panel": {
         "default_path": "sidepanel.html"
-      }
+    }
 }

@@ -17,7 +17,7 @@ body {
 h1 {
     margin: 0;
     text-align: center;
-    color: rgb(183, 148, 244);
+    color: #4CC790;
     font-size: 28px;
     margin-top: -12px;
 }
@@ -119,22 +119,18 @@ h1 {
 }
 
 .circular-chart.orange .circle {
-  stroke: #ff0000;
+   stroke: #4CC790;
 }
 
 .circular-chart.green .circle {
-  stroke: #4CC790;
-}
-
-.circular-chart.blue .circle {
-  stroke: #dde53c;
+    stroke: rgb(183, 148, 244);
 }
 
 .percentage {
-  fill: #666;
-  font-family: sans-serif;
-  font-size: 0.5em;
-  text-anchor: middle;
+   fill: #666;
+   font-family: sans-serif;
+   font-size: 0.5em;
+   text-anchor: middle;
 }
 
 .selected-text {
@@ -143,7 +139,6 @@ h1 {
     margin-top: 10px;
 }
 
-/* New styles for API Key form */
 #api-key-container {
     margin: 15px 0;
     padding: 10px;
@@ -185,7 +180,6 @@ h1 {
     background: rgba(76, 199, 144, 1);
 }
 
-/* Loading indicator */
 #loading-indicator {
     text-align: center;
     margin: 20px 0;
@@ -207,7 +201,6 @@ h1 {
     100% { transform: rotate(360deg); }
 }
 
-/* Error messages */
 #error-container {
     margin: 15px 0;
     padding: 10px;
@@ -221,7 +214,6 @@ h1 {
     margin: 0;
 }
 
-/* Content sections */
 .content-section {
     margin: 20px 0;
     padding: 10px;
@@ -265,7 +257,6 @@ h1 {
     color: #4CC790;
 }
 
-/* Citations list */
 #citations-list {
     padding-left: 20px;
     margin: 5px 0;
@@ -290,4 +281,14 @@ h1 {
     font-size: 14px;
     margin-top: 10px;
     padding: 5px;
+}
+
+#button-container {
+    text-align: center;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+#scan-webpage-button {
+    margin: 0 auto;
 }
