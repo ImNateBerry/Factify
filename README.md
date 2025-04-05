@@ -11,7 +11,7 @@ We built the extension using HTML, CSS, and JavaScript to read any text chosen b
 We struggled when figuring out how to implement the dynamic side panel that opens on a button click. Also, designing the UI so it would display all of our data in an easily understandable format.
 
 ## Accomplishments that we're proud of
-We are proud of making a Google Chrome Extension for the first time, including a dynamic side panel and button click feature upon user highlighting text. This was also a majority of the team's first time using an artificial intelligence API. The community feature is also somthing we are proud of as it allows us to further differentiate our product from other similar products.
+We are proud of making a Google Chrome Extension for the first time, including a dynamic side panel and button click feature upon user highlighting text. This was also a majority of the team's first time using an artificial intelligence API. The community feature is also something we are proud of as it allows us to further differentiate our product from other similar products.
 
 ## What we learned
 We gained experience in creating a Google Chrome Extension with an easily understandable and space friendly design. Additionally, three of us also have never worked with an AI API before, which allowed us to learn about cutting-edge technology
