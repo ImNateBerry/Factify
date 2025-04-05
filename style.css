@@ -35,18 +35,19 @@ h1 {
     margin-top: -12px;
 }
 .info-icon::before {
-    top: -5px;
     content: "?";
-    color: #fff;
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    position: relative;
+    top: -1px;
 }
 .info-icon {
-    top: 5px;
+    top: 8px;
     right: 5px;
-    border: 1px solid #fff;
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -61,13 +62,13 @@ h1 {
     top: 100%;
     right: 0;
     margin-top: 8px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
+    background-color: rgba(30, 40, 60, 0.8);
+    color: rgba(255, 255, 255, 0.8);
     padding: 6px 8px;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 12px;
     white-space: normal;
-    width: 180px;
+    width: 160px;
     pointer-events: none;
     text-align: center;
 }
@@ -383,6 +384,14 @@ h1 {
 
 #scan-webpage-button {
     margin: 0 auto;
+}
+
+#selection-tip {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 12px;
 }
 
 /* Community Hall Styles */

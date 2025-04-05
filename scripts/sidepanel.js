@@ -346,7 +346,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to scan all text on the webpage
   function scanWebpage(apiKey) {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
+      if (tabs[0] && tabs[0].id && tabs[0].url) { // Ensure tab and URL exist
+        const tabUrl = tabs[0].url;
+        const placeholderText = `Checked ${new URL(tabUrl).hostname}`; // Use hostname for brevity
+
         chrome.scripting.executeScript(
           {
             target: { tabId: tabs[0].id },
@@ -369,11 +372,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingIndicator.style.display = 'block';
                 factCheckContainer.style.display = 'none'; // Hide container
                 saveToCommunityButton.style.display = 'none';
-                currentSelectedText = webpageText; 
-                
-                // Reset the shouldAnalyze flag as we are initiating analysis now
-                chrome.storage.local.set({ shouldAnalyze: false, selectedText: webpageText }, () => {
-                   analyzeWithPerplexity(webpageText, apiKey);
+                currentSelectedText = placeholderText; // Use placeholder for display/saving key
+
+                // Reset the shouldAnalyze flag and set selectedText to the placeholder
+                // Associate the analysis results with the placeholder text
+                chrome.storage.local.set({ shouldAnalyze: false, selectedText: placeholderText }, () => {
+                   // Pass the full webpageText for analysis, but use placeholderText as the key later
+                   analyzeWithPerplexity(webpageText, apiKey, placeholderText); 
                 });
               } else {
                 alert('No text found on the webpage.');
@@ -388,6 +393,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         );
+      } else {
+        console.error("Could not get active tab information.");
+        alert("Could not get active tab information to scan.");
       }
     });
   }
