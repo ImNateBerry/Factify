@@ -13,9 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentAnalysisResults = null;
   let currentSelectedText = '';
 
+  // Ensure the fact check container is hidden initially
+  factCheckContainer.style.display = 'none';
+
   // Function to check if API key exists
   function checkApiKey() {
-    chrome.storage.local.get(['perplexityApiKey', 'shouldAnalyze'], (data) => {
+    chrome.storage.local.get(['perplexityApiKey', 'shouldAnalyze', 'selectedText', 'analysisResults'], (data) => {
       if (data.perplexityApiKey) {
         apiKeyContainer.style.display = 'none';
         
@@ -23,12 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.shouldAnalyze) {
           getSelectedTextAndAnalyze(data.perplexityApiKey);
         } else {
-          // Just show the existing results or text without analyzing
-          factCheckContainer.style.display = 'block';
+          // If not analyzing, check if results exist for the current text
+          const selectedText = data.selectedText || '';
+          if (selectedText && data.analysisResults && data.analysisResults[selectedText]) {
+            currentSelectedText = selectedText;
+            currentAnalysisResults = data.analysisResults[selectedText];
+            displayResults(data.analysisResults[selectedText]);
+            factCheckContainer.style.display = 'block'; // Show container with existing results
+            saveToCommunityButton.style.display = 'block';
+          } else {
+            factCheckContainer.style.display = 'none'; // Keep container hidden
+            saveToCommunityButton.style.display = 'none';
+          }
         }
       } else {
         apiKeyContainer.style.display = 'block';
-        factCheckContainer.style.display = 'none';
+        factCheckContainer.style.display = 'none'; // Keep container hidden
+        saveToCommunityButton.style.display = 'none';
       }
     });
   }
@@ -41,11 +55,23 @@ document.addEventListener('DOMContentLoaded', () => {
       if (apiKey) {
         chrome.storage.local.set({ perplexityApiKey: apiKey }, () => {
           apiKeyContainer.style.display = 'none';
-          chrome.storage.local.get('shouldAnalyze', (data) => {
+          // After submitting key, check if analysis should run or if existing results should be shown
+          chrome.storage.local.get(['shouldAnalyze', 'selectedText', 'analysisResults'], (data) => {
             if (data.shouldAnalyze) {
               getSelectedTextAndAnalyze(apiKey);
             } else {
-              factCheckContainer.style.display = 'block';
+              // Check for existing results similar to checkApiKey
+              const selectedText = data.selectedText || '';
+              if (selectedText && data.analysisResults && data.analysisResults[selectedText]) {
+                currentSelectedText = selectedText;
+                currentAnalysisResults = data.analysisResults[selectedText];
+                displayResults(data.analysisResults[selectedText]);
+                factCheckContainer.style.display = 'block';
+                saveToCommunityButton.style.display = 'block';
+              } else {
+                factCheckContainer.style.display = 'none';
+                saveToCommunityButton.style.display = 'none';
+              }
             }
           });
         });
@@ -94,11 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
             factCheckContainer.style.display = 'none';
             saveToCommunityButton.style.display = 'none';
             analyzeWithPerplexity(message.text, data.perplexityApiKey);
+          } else {
+            // If no API key, ensure fact check container is hidden
+            apiKeyContainer.style.display = 'block';
+            factCheckContainer.style.display = 'none';
+            saveToCommunityButton.style.display = 'none';
+            loadingIndicator.style.display = 'none';
           }
         });
       } else if (message.text === '') {
-        factCheckContainer.style.visibility = 'hidden';
+        // If no text is selected, hide everything related to analysis
+        factCheckContainer.style.display = 'none'; // Use display none instead of visibility
         saveToCommunityButton.style.display = 'none';
+        loadingIndicator.style.display = 'none';
+        document.getElementById('error-container').style.display = 'none'; // Also hide errors
       }
     }
   });
@@ -178,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(error => {
         console.error('Error calling Perplexity API:', error);
         loadingIndicator.style.display = 'none';
+        factCheckContainer.style.display = 'none'; // Ensure container is hidden on error
         saveToCommunityButton.style.display = 'none';
         let errorMessage = error.message;
         document.getElementById('error-message').innerHTML = `Error connecting to Perplexity API. Please check your API key and try again.<br><small>${errorMessage}</small>`;
@@ -230,6 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
       document.getElementById('error-message').textContent = 'Invalid response from API';
       document.getElementById('error-container').style.display = 'block';
+      factCheckContainer.style.display = 'none'; // Hide container on invalid data
+      saveToCommunityButton.style.display = 'none';
       return;
     }
     
@@ -315,17 +353,38 @@ document.addEventListener('DOMContentLoaded', () => {
             func: () => document.body.innerText, // Extract all text from the webpage
           },
           (results) => {
+            if (chrome.runtime.lastError) {
+              // Handle potential errors like no permission
+              console.error('Error executing script:', chrome.runtime.lastError);
+              alert(`Error scanning webpage: ${chrome.runtime.lastError.message}`);
+              loadingIndicator.style.display = 'none';
+              factCheckContainer.style.display = 'none';
+              saveToCommunityButton.style.display = 'none';
+              return;
+            }
+            
             if (results && results[0] && results[0].result) {
               const webpageText = results[0].result.trim();
               if (webpageText) {
                 loadingIndicator.style.display = 'block';
-                factCheckContainer.style.display = 'none';
+                factCheckContainer.style.display = 'none'; // Hide container
                 saveToCommunityButton.style.display = 'none';
-                currentSelectedText = webpageText;
-                analyzeWithPerplexity(webpageText, apiKey);
+                currentSelectedText = webpageText; 
+                
+                // Reset the shouldAnalyze flag as we are initiating analysis now
+                chrome.storage.local.set({ shouldAnalyze: false, selectedText: webpageText }, () => {
+                   analyzeWithPerplexity(webpageText, apiKey);
+                });
               } else {
                 alert('No text found on the webpage.');
+                loadingIndicator.style.display = 'none'; // Hide loading if no text
               }
+            } else {
+                // Handle cases where results might be empty or unexpected
+                alert('Could not retrieve text from the webpage.');
+                loadingIndicator.style.display = 'none'; // Hide loading
+                factCheckContainer.style.display = 'none';
+                saveToCommunityButton.style.display = 'none';
             }
           }
         );
@@ -401,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listener to the save to community button
   if (saveToCommunityButton) {
     saveToCommunityButton.addEventListener('click', saveFactCheckToCommunity);
-    // Initially hide the save button until we have results
+    // Initially hide the save button (factCheckContainer hides it implicitly now, but good practice)
     saveToCommunityButton.style.display = 'none';
   }
 
