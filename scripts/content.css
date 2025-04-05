@@ -1,0 +1,19 @@
+.fact-checker-button {
+    position: absolute;
+    display: none;
+    width: 24px;
+    height: 24px;
+    background-color: #4285f4;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    cursor: pointer;
+    z-index: 999999;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.2s;
+}
+
+.fact-checker-button:hover {
+    background-color: #3367d6;
+}
