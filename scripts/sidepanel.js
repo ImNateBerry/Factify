@@ -50,8 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get the selected text and analyze with Perplexity API
   function getSelectedTextAndAnalyze(apiKey) {
     chrome.storage.local.get(['selectedText', 'shouldAnalyze', 'analysisResults'], (data) => {
-      const selectedText = data.selectedText || 'No text selected.';
-      document.getElementById('selected-text').textContent = selectedText;
+      const selectedText = data.selectedText || '';
 
       // Check if analysis results already exist for the selected text
       if (data.analysisResults && data.analysisResults[selectedText]) {
@@ -61,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (selectedText && selectedText !== 'No text selected.' && data.shouldAnalyze) {
+      if (selectedText && selectedText !== '' && data.shouldAnalyze) {
         loadingIndicator.style.display = 'block';
         factCheckContainer.style.display = 'none';
 
@@ -76,10 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Listen for updates when panel is already open
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === 'updateSidePanel') {
-      document.getElementById('selected-text').textContent = message.text || 'No text selected.';
-      
       // If shouldAnalyze is true and we have text, run analysis
-      if (message.shouldAnalyze && message.text && message.text !== 'No text selected.') {
+      if (message.shouldAnalyze && message.text && message.text !== '') {
         chrome.storage.local.get('perplexityApiKey', (data) => {
           if (data.perplexityApiKey) {
             loadingIndicator.style.display = 'block';
@@ -87,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
             analyzeWithPerplexity(message.text, data.perplexityApiKey);
           }
         });
+      } else if (message.text === '') {
+        factCheckContainer.style.visibility = 'hidden';
       }
     }
   });
@@ -102,12 +101,34 @@ document.addEventListener('DOMContentLoaded', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "sonar",
+        model: "sonar-reasoning-pro",
         messages: [
-          {role: "system", content: "Be precise and concise in your analysis of factual accuracy and bias."},
-          {role: "user", content: prompt}
+          {
+            role: "system", 
+            content: `You are a fact-checking search API. When responding to any query, you must:
+
+                      Evaluate the statement or question for factual correctness.
+
+                      Provide a numeric truthfulness score from 0 to 100 (where 0 is completely false and 100 is entirely accurate).
+                                
+                      Provide a numeric bias score of the assumed bias of the used citations from 0 to 100 ( 0 which is no bias at all to 100 completely bias).
+                                
+                      Explain your reasoning in a concise text summary on why it the claims are the way they are.
+                                
+                      Your output must be valid JSON with the following structure (and no additional keys or text):
+                                
+                      {
+                      "truthfulness_score": 0.0,
+                      "bias_score": 0.0,
+                      "reasoning": "Your concise reasoning here.",
+                      }`
+          },
+          {
+            role: "user", 
+            content: prompt
+          }
         ],
-        max_tokens: 500
+        max_tokens: 1000
       })
     };
     
@@ -150,13 +171,42 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Extract scores from API response
   function extractScores(content) {
-    const truthScoreMatch = content.match(/truth\s*score.*?(\d+)/i);
-    const biasScoreMatch = content.match(/bias\s*score.*?(\d+)/i);
-    
-    return {
-      truthScore: truthScoreMatch ? parseInt(truthScoreMatch[1]) : 50,
-      biasScore: biasScoreMatch ? parseInt(biasScoreMatch[1]) : 50
-    };
+    try {
+      // Extract JSON from content (between ```json and ```)
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      
+      if (jsonMatch && jsonMatch[1]) {
+        const jsonStr = jsonMatch[1];
+        const parsedData = JSON.parse(jsonStr);
+        
+        return {
+          truthScore: Math.round(parsedData.truthfulness_score),
+          biasScore: Math.round(parsedData.bias_score),
+          reasoning: parsedData.reasoning
+        };
+      }
+      
+      // Fallback to regex if JSON parsing fails
+      const truthScoreMatch = content.match(/truth\s*score.*?(\d+)/i);
+      const biasScoreMatch = content.match(/bias\s*score.*?(\d+)/i);
+      
+      return {
+        truthScore: truthScoreMatch ? parseInt(truthScoreMatch[1]) : 50,
+        biasScore: biasScoreMatch ? parseInt(biasScoreMatch[1]) : 50,
+        reasoning: content
+      };
+    } catch (error) {
+      console.error('Error parsing JSON from content:', error);
+      // Fallback to regex
+      const truthScoreMatch = content.match(/truth\s*score.*?(\d+)/i);
+      const biasScoreMatch = content.match(/bias\s*score.*?(\d+)/i);
+      
+      return {
+        truthScore: truthScoreMatch ? parseInt(truthScoreMatch[1]) : 50,
+        biasScore: biasScoreMatch ? parseInt(biasScoreMatch[1]) : 50,
+        reasoning: content
+      };
+    }
   }
   
   // Display results in the UI
@@ -168,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     const content = data.choices[0].message.content;
-    const { truthScore, biasScore } = extractScores(content);
+    const { truthScore, biasScore, reasoning } = extractScores(content);
     
     // Update the circular charts
     updateChart('truth-chart', truthScore);
@@ -178,14 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.circular-chart.orange text').textContent = `${truthScore}%`;
     document.querySelector('.circular-chart.green text').textContent = `${biasScore}%`;
     
-    // Display reasoning
-    reasoningContent.innerHTML = formatReasoning(content);
+    // Get citations array for formatting inline references
+    const citations = data.citations && data.citations.length > 0 ? data.citations : [];
     
-    // Display citations
-    if (data.citations && data.citations.length > 0) {
+    // Display reasoning with clickable citations
+    reasoningContent.innerHTML = formatReasoning(reasoning, citations);
+    
+    // Display citations as numbered list
+    if (citations.length > 0) {
       citationsList.innerHTML = '';
-      data.citations.forEach(citation => {
+      citations.forEach((citation, index) => {
         const li = document.createElement('li');
+        li.setAttribute('value', index + 1); // Set the list item number
         const a = document.createElement('a');
         a.href = citation;
         a.textContent = citation;
@@ -208,8 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
-  // Format reasoning content with markdown-like syntax
-  function formatReasoning(content) {
+  // Format reasoning content with markdown-like syntax and clickable citations
+  function formatReasoning(content, citations = []) {
     // Convert markdown headers to HTML
     let formatted = content.replace(/## (.*)/g, '<h3>$1</h3>');
     formatted = formatted.replace(/### (.*)/g, '<h4>$1</h4>');
@@ -222,6 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Bold text
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Make citation references clickable [n] -> link to citation n
+    formatted = formatted.replace(/\[(\d+)\]/g, (match, number) => {
+      const citationIndex = parseInt(number, 10) - 1;
+      if (citations && citations[citationIndex]) {
+        return `<a href="${citations[citationIndex]}" target="_blank" class="citation-link">[${number}]</a>`;
+      }
+      return match; // Keep original if no matching citation
+    });
     
     return formatted;
   }
@@ -239,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (results && results[0] && results[0].result) {
               const webpageText = results[0].result.trim();
               if (webpageText) {
-                document.getElementById('selected-text').textContent = 'Analyzing webpage content...';
                 loadingIndicator.style.display = 'block';
                 factCheckContainer.style.display = 'none';
                 analyzeWithPerplexity(webpageText, apiKey);
