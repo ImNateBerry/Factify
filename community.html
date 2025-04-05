@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Factify Community Hall</title>
+</head>
+<body>
+  <div id="header">
+    <h1>Factify.</h1>
+    <div class="info-icon" id="info-icon"></div>
+  </div>
+  
+  <div class="tab-navigation">
+    <button class="tab-button active" data-tab="top-rated">Top Rated</button>
+    <button class="tab-button" data-tab="recent">Recent</button>
+  </div>
+  
+  <div id="loading-indicator" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Loading fact checks...</p>
+  </div>
+  
+  <div id="error-container" style="display: none;">
+    <p id="error-message" class="error-text"></p>
+  </div>
+  
+  <div id="fact-checks-container">
+    <!-- Fact checks will be dynamically added here -->
+  </div>
+  
+  <div id="no-results" style="display: none;">
+    <p class="no-results-text">No fact checks available. Be the first to contribute!</p>
+  </div>
+  
+  <div class="navigation-footer">
+    <button id="back-to-home" class="api-key-submit">Back to Fact Checker</button>
+  </div>
+  
+  <script src="scripts/community.js"></script>
+</body>
+</html> 

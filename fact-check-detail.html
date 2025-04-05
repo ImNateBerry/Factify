@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Factify - Fact Check Detail</title>
+</head>
+<body class="detail-page">
+  <div id="header">
+    <h1>Factify.</h1>
+    <div class="info-icon" id="info-icon"></div>
+  </div>
+  
+  <div id="loading-indicator" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Loading fact check details...</p>
+  </div>
+  
+  <div id="error-container" style="display: none;">
+    <p id="error-message" class="error-text"></p>
+  </div>
+  
+  <div id="fact-check-detail-container">
+    <div class="detail-text-container">
+      <h3 class="section-title">Analyzed Text</h3>
+      <div id="detail-text" class="content-body"></div>
+    </div>
+    
+    <div class="charts-container">
+      <div class="score-display">
+        <div class="score-box">
+          <h3 id="truth-score">Truth Score</h3>
+          <div class="large-percentage truth-percentage" id="truth-percentage">50%</div>
+        </div>
+        <div class="score-box">
+          <h3 id="bias-score">Bias Score</h3>
+          <div class="large-percentage bias-percentage" id="bias-percentage">60%</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Analysis Reasoning -->
+    <div id="reasoning-container" class="content-section">
+      <h3 class="section-title">Analysis</h3>
+      <div id="reasoning-content" class="content-body"></div>
+    </div>
+    
+    <!-- Citations -->
+    <div id="citations-container" class="content-section" style="display: none;">
+      <h3 class="section-title">Citations</h3>
+      <ol id="citations-list" class="content-body"></ol>
+    </div>
+    
+    <!-- Community Votes -->
+    <div id="community-votes" class="content-section">
+      <h3 class="section-title">Community Feedback</h3>
+      <div class="vote-controls-large">
+        <button class="vote-button like-button-large" id="detail-like-button">👍</button>
+        <span class="vote-count" id="detail-likes-count">0</span>
+        <button class="vote-button dislike-button-large" id="detail-dislike-button">👎</button>
+        <span class="vote-count" id="detail-dislikes-count">0</span>
+      </div>
+      <div class="timestamp" id="detail-timestamp"></div>
+    </div>
+  </div>
+  
+  <div class="navigation-footer">
+    <button id="back-to-community" class="api-key-submit">Back to Community Hall</button>
+  </div>
+  
+  <script src="scripts/fact-check-detail.js"></script>
+</body>
+</html> 

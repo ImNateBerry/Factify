@@ -37,3 +37,7 @@ logs/
 
 # Optional: Chrome extension specific development files
 chrome-extension-debug.log
+
+#cursor files
+.cursorrules
+.cursor

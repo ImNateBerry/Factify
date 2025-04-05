@@ -159,6 +159,60 @@ h1 {
    text-anchor: middle;
 }
 
+/* Styles for the new percentage displays on detail page */
+.score-display {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.score-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 20px;
+}
+
+.large-percentage {
+  font-size: 32px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.truth-percentage {
+  color: #4C90C7;
+}
+
+.bias-percentage {
+  color: rgba(76, 144, 199, 0.9);
+}
+
+/* Media query for larger screens (fact-check-detail.html) */
+@media (min-width: 600px) {
+  body.detail-page {
+    width: auto;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .score-box {
+    margin: 0 40px;
+  }
+  
+  .large-percentage {
+    font-size: 48px;
+  }
+  
+  #fact-check-detail-container {
+    padding: 20px;
+  }
+}
+
 .selected-text {
     font-size: 14px;
     color: #fff;
@@ -329,4 +383,193 @@ h1 {
 
 #scan-webpage-button {
     margin: 0 auto;
+}
+
+/* Community Hall Styles */
+.tab-navigation {
+  display: flex;
+  justify-content: space-around;
+  margin: 15px 0;
+  border-bottom: 1px solid rgba(130, 130, 130, 0.25);
+  padding-bottom: 10px;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  padding: 8px 15px;
+  cursor: pointer;
+  position: relative;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.tab-button.active {
+  opacity: 1;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #4C90C7;
+  border-radius: 2px;
+}
+
+.fact-check-card {
+  background: rgba(15, 30, 60, 0.5);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.fact-check-content {
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.fact-check-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(transparent, rgba(15, 30, 60, 0.9));
+}
+
+.fact-check-text {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+
+.fact-check-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(130, 130, 130, 0.25);
+}
+
+.mini-score {
+  display: flex;
+  align-items: center;
+}
+
+.score-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.truth-dot {
+  background-color: #4C90C7;
+}
+
+.bias-dot {
+  background-color: rgba(76, 144, 199, 0.7);
+}
+
+.score-value {
+  font-size: 14px;
+  color: #fff;
+  margin-right: 10px;
+}
+
+.vote-controls {
+  display: flex;
+  align-items: center;
+}
+
+.vote-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin: 0 5px;
+  padding: 5px;
+  color: #fff;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.vote-button:hover, .vote-button.active {
+  opacity: 1;
+}
+
+.vote-count {
+  font-size: 14px;
+  color: #fff;
+  margin: 0 5px;
+}
+
+.read-more-button {
+  display: block;
+  text-align: center;
+  background: rgba(76, 144, 199, 0.3);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.read-more-button:hover {
+  background: rgba(76, 144, 199, 0.5);
+}
+
+.navigation-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(130, 130, 130, 0.25);
+}
+
+.no-results-text {
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  margin: 30px 0;
+}
+
+.save-button {
+  background: rgba(76, 144, 199, 0.8);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.save-button:hover {
+  background: rgba(76, 144, 199, 1);
+}
+
+.save-button.saved {
+  background: rgba(76, 199, 124, 0.8);
+}
+
+.timestamp {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: right;
+  margin-top: 5px;
 }

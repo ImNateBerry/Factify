@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const reasoningContent = document.getElementById('reasoning-content');
   const citationsList = document.getElementById('citations-list');
   const scanWebpageButton = document.getElementById('scan-webpage-button');
+  const communityHallButton = document.getElementById('community-hall-button');
+  const saveToCommunityButton = document.getElementById('save-to-community');
+
+  // Current analysis results and selected text
+  let currentAnalysisResults = null;
+  let currentSelectedText = '';
 
   // Function to check if API key exists
   function checkApiKey() {
@@ -51,18 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSelectedTextAndAnalyze(apiKey) {
     chrome.storage.local.get(['selectedText', 'shouldAnalyze', 'analysisResults'], (data) => {
       const selectedText = data.selectedText || '';
+      currentSelectedText = selectedText;
 
       // Check if analysis results already exist for the selected text
       if (data.analysisResults && data.analysisResults[selectedText]) {
+        currentAnalysisResults = data.analysisResults[selectedText];
         displayResults(data.analysisResults[selectedText]);
         factCheckContainer.style.display = 'block';
         loadingIndicator.style.display = 'none';
+        saveToCommunityButton.style.display = 'block';
         return;
       }
 
       if (selectedText && selectedText !== '' && data.shouldAnalyze) {
         loadingIndicator.style.display = 'block';
         factCheckContainer.style.display = 'none';
+        saveToCommunityButton.style.display = 'none';
 
         // Reset the shouldAnalyze flag to prevent re-analyzing on panel reopen
         chrome.storage.local.set({ shouldAnalyze: false }, () => {
@@ -77,15 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (message.action === 'updateSidePanel') {
       // If shouldAnalyze is true and we have text, run analysis
       if (message.shouldAnalyze && message.text && message.text !== '') {
+        currentSelectedText = message.text;
         chrome.storage.local.get('perplexityApiKey', (data) => {
           if (data.perplexityApiKey) {
             loadingIndicator.style.display = 'block';
             factCheckContainer.style.display = 'none';
+            saveToCommunityButton.style.display = 'none';
             analyzeWithPerplexity(message.text, data.perplexityApiKey);
           }
         });
       } else if (message.text === '') {
         factCheckContainer.style.visibility = 'hidden';
+        saveToCommunityButton.style.display = 'none';
       }
     }
   });
@@ -148,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Received API response:', data);
         loadingIndicator.style.display = 'none';
         factCheckContainer.style.display = 'block';
+        saveToCommunityButton.style.display = 'block';
+        currentAnalysisResults = data;
 
         // Save the analysis results in chrome.storage.local
         chrome.storage.local.get('analysisResults', (storageData) => {
@@ -163,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(error => {
         console.error('Error calling Perplexity API:', error);
         loadingIndicator.style.display = 'none';
+        saveToCommunityButton.style.display = 'none';
         let errorMessage = error.message;
         document.getElementById('error-message').innerHTML = `Error connecting to Perplexity API. Please check your API key and try again.<br><small>${errorMessage}</small>`;
         document.getElementById('error-container').style.display = 'block';
@@ -304,6 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
               if (webpageText) {
                 loadingIndicator.style.display = 'block';
                 factCheckContainer.style.display = 'none';
+                saveToCommunityButton.style.display = 'none';
+                currentSelectedText = webpageText;
                 analyzeWithPerplexity(webpageText, apiKey);
               } else {
                 alert('No text found on the webpage.');
@@ -311,6 +329,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           }
         );
+      }
+    });
+  }
+
+  // Function to save fact check to community (Supabase)
+  function saveFactCheckToCommunity() {
+    if (!currentAnalysisResults || !currentSelectedText) {
+      alert('No analysis results to save.');
+      return;
+    }
+
+    saveToCommunityButton.disabled = true;
+    saveToCommunityButton.textContent = 'Saving...';
+    
+    const content = currentAnalysisResults.choices[0].message.content;
+    const { truthScore, biasScore, reasoning } = extractScores(content);
+    
+    // Get citations if available
+    const citations = currentAnalysisResults.citations || [];
+    
+    // Send to background script to handle the Supabase operation
+    chrome.runtime.sendMessage({
+      action: 'saveFactCheck',
+      factCheck: {
+        text: currentSelectedText,
+        truth_score: truthScore,
+        bias_score: biasScore,
+        reasoning: reasoning,
+        citations: citations
+      }
+    }, (response) => {
+      saveToCommunityButton.disabled = false;
+      
+      if (response.success) {
+        saveToCommunityButton.textContent = 'Saved to Community';
+        saveToCommunityButton.classList.add('saved');
+        
+        // Reset the button after 3 seconds
+        setTimeout(() => {
+          saveToCommunityButton.textContent = 'Save to Community';
+          saveToCommunityButton.classList.remove('saved');
+        }, 3000);
+      } else {
+        saveToCommunityButton.textContent = 'Save to Community';
+        alert(`Error saving to community: ${response.error || 'Unknown error'}`);
       }
     });
   }
@@ -326,6 +389,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  }
+  
+  // Add event listener to the community hall button
+  if (communityHallButton) {
+    communityHallButton.addEventListener('click', () => {
+      window.location.href = 'community.html';
+    });
+  }
+  
+  // Add event listener to the save to community button
+  if (saveToCommunityButton) {
+    saveToCommunityButton.addEventListener('click', saveFactCheckToCommunity);
+    // Initially hide the save button until we have results
+    saveToCommunityButton.style.display = 'none';
   }
 
   // Initialize

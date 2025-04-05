@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Factify",
-    "version": "1.1",
+    "version": "1.2",
     "description": "Fact-check highlighted text on the web. Or scan a webpage to get a fact-check summary.",
     "action": {
         "default_popup": "sidepanel.html",
