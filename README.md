@@ -15,6 +15,3 @@ Making a google chrome extension for the first time, including a dynamic side pa
 
 ## What we learned
 We all learned how to create a Google Chrome extension with an easily understandable and space friendly design. 3 of us also have never worked with an AI API before, and we all learned how to work with one.
-
-## What's next for Factify
-Publishing our extension to the google chrome webstore. Giving ragmodel context to true sources to allow students or academic writers to use truthful information in their writing.
