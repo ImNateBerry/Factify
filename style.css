@@ -1,19 +1,32 @@
+@font-face {
+    font-family: Kollektif-Bold;
+    src: url(Kollektif-Bold.ttf);
+  }
+
 body { 
     width: 300px;
     padding: 20px;
     font: 16px/1.5 Arial, sans-serif;
     border: 1px solid rgba(130, 130, 130, 0.25);
-    background: rgba(0, 0, 0, 0.8);
+    background: radial-gradient(circle, rgba(60, 150, 110, 0.9) 0%, rgba(56, 102, 155, 0.9) 100%);
+    /*background: radial-gradient(circle, rgba(60, 150, 110, 0.9) 0%, rgba(114, 82, 162, 0.9) 100%);*/
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border-radius: 10px;
+    color: #fff;
 }
+
 #header {
     position: relative;
     border-bottom: 1px solid rgba(130, 130, 130, 0.25);
-
+    font: 16px/1.5 Kollektif-Bold, Arial, sans-serif;
 }
+
+#info-icon {
+    font: 16px/1.5 Arial, sans-serif;
+}
+
 h1 {
     margin: 0;
     text-align: center;
@@ -24,13 +37,13 @@ h1 {
 .info-icon::before {
     top: -5px;
     content: "?";
-    color: rgb(130, 130, 130);
+    color: #fff;
     font-size: 14px;
-  }
+}
 .info-icon {
     top: 5px;
     right: 5px;
-    border: 1px solid rgb(130, 130, 130);
+    border: 1px solid #fff;
     border-radius: 50%;
     width: 24px;
     height: 24px;
@@ -59,18 +72,30 @@ h1 {
     text-align: center;
 }
 
+#fact-check-container {
+    /* Extend the container to include the percentage circles */
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(40, 40, 40, 0.5);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .charts-container {
-  width: 100%;
-  margin-top: 15px;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 10px;
+    border-bottom: 1px solid rgba(130, 130, 130, 0.25);
+    padding-bottom: 15px;
 }
 
 .chart-titles {
     display: flex;
     justify-content: space-around;
     width: 100%;
-    color: rgba(130, 130, 130, 0.8);
+    color: #fff;
     font-size: 14px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 #truth-score, #bias-score {
@@ -84,6 +109,7 @@ h1 {
     flex-direction: row;
     justify-content: space-around;
     width: 100%;
+    margin-bottom: 15px;
 }
   
 .single-chart {
@@ -123,11 +149,12 @@ h1 {
 }
 
 .circular-chart.green .circle {
-    stroke: rgb(183, 148, 244);
+    /*stroke: rgb(183, 148, 244);*/
+    stroke: rgba(76, 124, 180, 0.9)
 }
 
 .percentage {
-   fill: #666;
+   fill: #fff;
    font-family: sans-serif;
    font-size: 0.5em;
    text-anchor: middle;
