@@ -1,8 +1,11 @@
+## Awarded 1st place overall at Cathacks XI: 
+https://ukycathacks-xi.devpost.com
+
 ## Inspiration
 Misinformation and fake news run rampant online with no quick way to check if the information is factual. This inspired us to create Factify as a tool to empower users to get instant fact-checking and bias analysis.
 
 ## What it does
-Factify is a Google Chrome Extension that will evaluate a highlighted statement or webpage for factual accuracy and bias by using Perplexity's Sonar-Reasoning-Pro API. It returns a score from 0-100 for both factualness and bias, along with listing the reasoning and sources that it used to do this. An additional feature of our extension is the community feature where users can either like or dislike fact checks that are saved to the community page by other users.
+Factify is a Google Chrome Extension that will evaluate a highlighted statement or webpage for factual accuracy and bias by using Perplexity's Sonar-Reasoning-Pro API. It returns a score from 0%-100% for both factualness and bias, along with listing the reasoning and sources that it used to do this. An additional feature of our extension is the community feature where users can either like or dislike fact checks that are saved to the community page by other users.
 
 ## How we built it
 We built the extension using HTML, CSS, and JavaScript to read any text chosen by a user and run this text through Perplexity Sonar reasoning model to create a detailed overview with citations in a interactive side panel.
@@ -18,3 +21,11 @@ We gained experience in creating a Google Chrome Extension with an easily unders
 
 ## What's next for Factify
 Our next steps include publishing our extension to the Google Chrome Webstore. Also, giving rag model context to true sources to allow students or academic writers to use truthful information in their writing. We would also like to continue to explore the community feature.
+
+## Example screenshots
+
+The main fact checking UI:
+![Screenshot 2025-04-05 181216](https://github.com/user-attachments/assets/79655e62-42f6-4d5f-afb2-84adf1b2909e)
+
+The community hub UI:
+![Screenshot 2025-04-05 181350](https://github.com/user-attachments/assets/3213e6bb-2151-4564-867e-e5c5857d5de6)
