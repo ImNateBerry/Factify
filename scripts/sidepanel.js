@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Call Perplexity API
   function analyzeWithPerplexity(text, apiKey) {
-    const prompt = `Analyze the following text for factual accuracy and bias. Provide a detailed analysis with truth score (0-100) and bias score (0-100, where 0 is neutral and 100 is heavily biased). Include reasoning and any relevant sources:\n\n${text}`;
+    const prompt = `Fact check the following:\n\n${text}`;
     
     const options = {
       method: 'POST',
@@ -155,28 +155,36 @@ document.addEventListener('DOMContentLoaded', () => {
             role: "system", 
             content: `You are a fact-checking search API. When responding to any query, you must:
 
-                      Evaluate the statement or question for factual correctness.
+                      - Quickly reason about the statement or question and how it contrasts or supports the sources you find.
 
-                      Provide a numeric truthfulness score from 0 to 100 (where 0 is completely false and 100 is entirely accurate).
+                      - Gather all the information you can from reputable sources about the statement or question.
+
+                      - Evaluate the statement or question for factual correctness.
+
+                      - Provide a numeric truthfulness score from 0 to 100 (where 0 is completely false and 100 is entirely accurate).
                                 
-                      Provide a numeric bias score of the assumed bias of the used citations from 0 to 100 ( 0 which is no bias at all to 100 completely bias).
+                      - Provide a numeric bias score of the assumed bias of the used citations from 0 to 100 ( 0 which is no bias at all to 100 completely bias).
                                 
-                      Explain your reasoning in a concise text summary on why it the claims are the way they are.
+                      - Explain your reasoning in a concise text summary on why it the claims are the way they are providing incline citations around brackets.
                                 
-                      Your output must be valid JSON with the following structure (and no additional keys or text):
+                      - Your output must be valid JSON with the following structure (and no additional keys or text):
                                 
-                      {
-                      "truthfulness_score": 0.0,
-                      "bias_score": 0.0,
-                      "reasoning": "Your concise reasoning here.",
-                      }`
+                        {
+                        "truthfulness_score": 0.0,
+                        "bias_score": 0.0,
+                        "reasoning": "Your concise reasoning here.",
+                        }
+                      `
           },
           {
             role: "user", 
             content: prompt
           }
         ],
-        max_tokens: 1000
+        // temperature: 0.1,
+        // top_p: 0.9,
+        // frequency_penalty: 0.7,
+        // presence_penalty: 0.0
       })
     };
     
@@ -222,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Extract scores from API response
-  function extractScores(content) {
+  function extractJSON(content) {
     try {
       // Extract JSON from content (between ```json and ```)
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
@@ -236,6 +244,23 @@ document.addEventListener('DOMContentLoaded', () => {
           biasScore: Math.round(parsedData.bias_score),
           reasoning: parsedData.reasoning
         };
+      }
+      
+      // Try to find JSON in curly braces if code block extraction failed
+      const curlyBracesMatch = content.match(/\{[\s\S]*?\}/);
+      if (curlyBracesMatch && curlyBracesMatch[0]) {
+        try {
+          const parsedData = JSON.parse(curlyBracesMatch[0]);
+          if (parsedData.truthfulness_score !== undefined && parsedData.bias_score !== undefined) {
+            return {
+              truthScore: Math.round(parsedData.truthfulness_score),
+              biasScore: Math.round(parsedData.bias_score),
+              reasoning: parsedData.reasoning || content
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing JSON from curly braces:', e);
+        }
       }
       
       // Fallback to regex if JSON parsing fails
@@ -272,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     const content = data.choices[0].message.content;
-    const { truthScore, biasScore, reasoning } = extractScores(content);
+    const { truthScore, biasScore, reasoning } = extractJSON(content);
     
     // Update the circular charts
     updateChart('truth-chart', truthScore);
@@ -411,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveToCommunityButton.textContent = 'Saving...';
     
     const content = currentAnalysisResults.choices[0].message.content;
-    const { truthScore, biasScore, reasoning } = extractScores(content);
+    const { truthScore, biasScore, reasoning } = extractJSON(content);
     
     // Get citations if available
     const citations = currentAnalysisResults.citations || [];

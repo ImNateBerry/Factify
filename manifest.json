@@ -4,18 +4,18 @@
     "version": "1.3",
     "description": "Fact-check highlighted text on the web. Or scan a webpage to get a fact-check summary.",
     "icons": {
-        "16": "otherIcons/icon16.png",
-        "32": "otherIcons/icon32.png",
-        "48": "otherIcons/icon48.png",
-        "128": "icon.png"
+        "16": "images/icon16.png",
+        "32": "images/icon32.png",
+        "48": "images/icon48.png",
+        "128": "images/icon.png"
     },
     "action": {
         "default_popup": "sidepanel.html",
         "default_icon": {
-            "16": "otherIcons/icon16.png",
-            "32": "otherIcons/icon32.png",
-            "48": "otherIcons/icon48.png",
-            "128": "icon.png"
+            "16": "images/icon16.png",
+            "32": "images/icon32.png",
+            "48": "images/icon48.png",
+            "128": "images/icon.png"
         }
     },
     "permissions": [
