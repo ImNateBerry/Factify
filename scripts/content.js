@@ -6,16 +6,30 @@ function ensureSidePanelButton() {
 
     console.log('Creating side panel button');
     sidePanelButton = document.createElement('button');
-    sidePanelButton.textContent = 'Fact Check';
+    // Remove text content and direct styling that will be handled by CSS
+    // sidePanelButton.textContent = 'Fact Check';
     sidePanelButton.style.position = 'absolute';
     sidePanelButton.style.zIndex = '10000';
-    sidePanelButton.style.backgroundColor = '#007bff';
-    sidePanelButton.style.color = '#fff';
-    sidePanelButton.style.border = 'none';
-    sidePanelButton.style.padding = '5px 10px';
-    sidePanelButton.style.borderRadius = '5px';
+    // sidePanelButton.style.backgroundColor = '#007bff';
+    // sidePanelButton.style.color = '#fff';
+    // sidePanelButton.style.border = 'none';
+    // sidePanelButton.style.padding = '5px 10px';
+    // sidePanelButton.style.borderRadius = '5px';
     sidePanelButton.style.cursor = 'pointer';
     sidePanelButton.style.display = 'none'; // Start hidden
+
+    // Add CSS class for styling
+    sidePanelButton.classList.add('fact-checker-button');
+
+    // Set background image using the extension's icon URL
+    try {
+        const iconUrl = chrome.runtime.getURL('images/icon128.png');
+        sidePanelButton.style.backgroundImage = `url('${iconUrl}')`;
+    } catch (error) {
+        console.error("Error getting icon URL:", error);
+        // Fallback or alternative styling can be added here if needed
+    }
+
     document.body.appendChild(sidePanelButton);
 
     // Add the click event listener

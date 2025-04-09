@@ -7,7 +7,7 @@
         "16": "images/icon16.png",
         "32": "images/icon32.png",
         "48": "images/icon48.png",
-        "128": "images/icon.png"
+        "128": "images/icon128.png"
     },
     "action": {
         "default_popup": "sidepanel.html",
@@ -15,7 +15,7 @@
             "16": "images/icon16.png",
             "32": "images/icon32.png",
             "48": "images/icon48.png",
-            "128": "images/icon.png"
+            "128": "images/icon128.png"
         }
     },
     "permissions": [
@@ -47,5 +47,11 @@
     ],
     "side_panel": {
         "default_path": "sidepanel.html"
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [ "images/icon128.png" ],
+            "matches": [ "<all_urls>" ]
+        }
+    ]
 }
