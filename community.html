@@ -4,12 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
     <title>Factify Community Hall</title>
 </head>
 <body>
   <div id="header">
+    <a href="sidepanel.html" id="back-arrow" class="back-arrow"><i class="fas fa-arrow-left"></i></a>
     <h1>Factify.</h1>
-    <div class="info-icon" id="info-icon"></div>
+    <!-- <div class="info-icon" id="info-icon"></div> -->
   </div>
   
   <div class="tab-navigation">
@@ -33,9 +35,11 @@
   <div id="no-results" style="display: none;">
     <p class="no-results-text">No fact checks available. Be the first to contribute!</p>
   </div>
+
+  <button id="load-more-button" style="display: none;" class="save-button">Load More</button>
   
-  <div class="navigation-footer">
-    <button id="back-to-home" class="api-key-submit">Back to Fact Checker</button>
+  <div id="pagination-controls">
+    <!-- Pagination buttons will be dynamically added here -->
   </div>
   
   <script src="scripts/community.js"></script>

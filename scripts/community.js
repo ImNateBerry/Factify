@@ -4,10 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const errorContainer = document.getElementById('error-container');
   const errorMessage = document.getElementById('error-message');
   const noResults = document.getElementById('no-results');
-  const backToHomeButton = document.getElementById('back-to-home');
+  const backToHomeButton = document.getElementById('back-arrow');
   const tabButtons = document.querySelectorAll('.tab-button');
+  const loadMoreButton = document.getElementById('load-more-button');
   
   let currentTab = 'top-rated';
+  let currentOffset = 0;
+  const loadLimit = 10;
   
   // Function to handle tab switching
   function switchTab(tab) {
@@ -20,7 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
-    loadFactChecks();
+    currentOffset = 0;
+    factChecksContainer.innerHTML = '';
+    loadMoreButton.style.display = 'none';
+    loadFactChecks(false);
   }
   
   // Add event listeners to tab buttons
@@ -31,24 +37,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Function to load fact checks from Supabase
-  async function loadFactChecks() {
-    factChecksContainer.innerHTML = '';
-    loadingIndicator.style.display = 'block';
-    noResults.style.display = 'none';
+  async function loadFactChecks(isLoadingMore = false) {
+    if (!isLoadingMore) {
+      loadingIndicator.style.display = 'block';
+      factChecksContainer.innerHTML = '';
+      currentOffset = 0;
+      noResults.style.display = 'none';
+    } else {
+      loadMoreButton.textContent = 'Loading...';
+      loadMoreButton.disabled = true;
+    }
+
     errorContainer.style.display = 'none';
-    
+    loadMoreButton.style.display = 'none';
+
     try {
-      // Different ordering based on the current tab - using Supabase compatible syntax
       const orderBy = currentTab === 'top-rated' 
         ? 'likes.desc.nullslast,dislikes.asc.nullslast' 
         : 'created_at.desc.nullslast';
       
-      // Make a request to a background script that will handle the Supabase query
       chrome.runtime.sendMessage({
         action: 'fetchFactChecks',
-        orderBy: orderBy
+        orderBy: orderBy,
+        limit: loadLimit,
+        offset: currentOffset
       }, (response) => {
-        loadingIndicator.style.display = 'none';
+        if (!isLoadingMore) {
+          loadingIndicator.style.display = 'none';
+        } else {
+          loadMoreButton.textContent = 'Load More';
+          loadMoreButton.disabled = false;
+        }
         
         if (response.error) {
           errorMessage.textContent = `Error loading fact checks: ${response.error}`;
@@ -58,21 +77,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const factChecks = response.factChecks || [];
         
-        if (factChecks.length === 0) {
+        if (!isLoadingMore && factChecks.length === 0) {
           noResults.style.display = 'block';
           return;
         }
         
-        // Render fact checks
+        if (isLoadingMore && factChecks.length === 0) {
+          loadMoreButton.style.display = 'none';
+          return;
+        }
+        
         factChecks.forEach(factCheck => {
           const factCheckElement = createFactCheckElement(factCheck);
           factChecksContainer.appendChild(factCheckElement);
         });
+        
+        currentOffset += factChecks.length;
+        
+        if (factChecks.length < loadLimit) {
+          loadMoreButton.style.display = 'none';
+        } else {
+          loadMoreButton.style.display = 'block';
+        }
       });
     } catch (error) {
-      loadingIndicator.style.display = 'none';
       errorMessage.textContent = `Error: ${error.message}`;
       errorContainer.style.display = 'block';
+      if (!isLoadingMore) {
+        loadingIndicator.style.display = 'none';
+      } else {
+        loadMoreButton.textContent = 'Load More';
+        loadMoreButton.disabled = false;
+      }
+      loadMoreButton.style.display = 'none';
     }
   }
   
@@ -182,6 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'sidepanel.html';
   });
   
+  // Add event listener for the load more button
+  loadMoreButton.addEventListener('click', () => {
+    loadFactChecks(true);
+  });
+  
   // Initial load
-  loadFactChecks();
+  loadFactChecks(false);
 }); 

@@ -4,7 +4,7 @@
   }
 
 body { 
-    width: 300px;
+    min-width: 250px;
     padding: 20px;
     font: 16px/1.5 Arial, sans-serif;
     border: 1px solid rgba(130, 130, 130, 0.25);
@@ -15,6 +15,7 @@ body {
     border-radius: 10px;
     color: #fff;
     background-attachment: fixed;
+    box-sizing: border-box;
 }
 
 #header {
@@ -23,9 +24,6 @@ body {
     font: 16px/1.5 Kollektif-Bold, Arial, sans-serif;
 }
 
-#info-icon {
-    font: 16px/1.5 Arial, sans-serif;
-}
 
 h1 {
     margin: 0;
@@ -34,44 +32,7 @@ h1 {
     font-size: 28px;
     margin-top: -12px;
 }
-.info-icon::before {
-    content: "?";
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-    position: relative;
-    top: -1px;
-}
-.info-icon {
-    top: 8px;
-    right: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    cursor: pointer;
-    margin-top: -2px;
-    margin-left: 15px;
-}
-.info-icon:hover::after {
-    content: "Highlight text on a webpage and click the extension icon to receive a fact and bias score";
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 8px;
-    background-color: rgba(30, 40, 60, 0.8);
-    color: rgba(255, 255, 255, 0.8);
-    padding: 6px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: normal;
-    width: 160px;
-    pointer-events: none;
-    text-align: center;
-}
+
 
 #fact-check-container {
     /* Extend the container to include the percentage circles */
@@ -111,19 +72,21 @@ h1 {
     justify-content: space-around;
     width: 100%;
     margin-bottom: 15px;
+    gap: 10px;
 }
   
 .single-chart {
     flex: 1;
     display: flex;
     justify-content: center;
-    margin: 0 5px;
+    max-width: 120px;
 }
 
 .circular-chart {
     display: block;
-    width: 100px;
-    height: 100px;
+    max-width: 100px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
 }
 
 .circle-bg {
@@ -377,13 +340,19 @@ h1 {
 }
 
 #button-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
     text-align: center;
     margin-top: 10px;
     padding-top: 10px;
 }
 
-#scan-webpage-button {
-    margin: 0 auto;
+#scan-webpage-button, #community-hall-button {
+    flex-grow: 1;
+    min-width: 120px;
 }
 
 #selection-tip {
@@ -392,6 +361,27 @@ h1 {
     text-align: center;
     margin-top: 8px;
     margin-bottom: 12px;
+}
+
+/* Media Query for narrow screens */
+@media (max-width: 360px) {
+    #button-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #scan-webpage-button, #community-hall-button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    #scan-webpage-button:last-child, #community-hall-button:last-child {
+        margin-bottom: 0;
+    }
+
+    .single-chart {
+        max-width: 100px;
+    }
 }
 
 /* Community Hall Styles */
@@ -581,4 +571,18 @@ h1 {
   color: rgba(255, 255, 255, 0.6);
   text-align: right;
   margin-top: 5px;
+}
+
+.back-arrow {
+    position: absolute;
+    top: 10px; /* Adjust as needed */
+    left: 10px; /* Adjust as needed */
+    color: rgba(255, 255, 255, 0.6); /* Match tooltip icon color */
+    font-size: 20px; /* Adjust size as needed */
+    text-decoration: none;
+    z-index: 10; /* Ensure it's above other elements */
+}
+
+.back-arrow:hover {
+    color: rgba(255, 255, 255, 0.9); /* Slightly brighter on hover */
 }

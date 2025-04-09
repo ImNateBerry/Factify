@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.action === 'fetchFactChecks') {
     // Fetch fact checks from Supabase
-    fetchFactChecksFromSupabase(message.orderBy)
+    fetchFactChecksFromSupabase(message.orderBy, message.limit, message.offset)
       .then(factChecks => {
         console.log('Fetched fact checks:', factChecks);
         sendResponse({ factChecks });
@@ -159,11 +159,11 @@ async function saveFactCheckToSupabase(factCheck) {
 }
 
 // Function to fetch fact checks from Supabase
-async function fetchFactChecksFromSupabase(orderBy = 'created_at.desc.nullslast') {
+async function fetchFactChecksFromSupabase(orderBy = 'created_at.desc.nullslast', limit = 10, offset = 0) {
   const key = await getSupabaseKey();
   
   const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/fact_checks?select=*&order=${encodeURIComponent(orderBy)}&limit=50`,
+    `${SUPABASE_URL}/rest/v1/fact_checks?select=*&order=${encodeURIComponent(orderBy)}&limit=${limit}&offset=${offset}`,
     {
       method: 'GET',
       headers: {
