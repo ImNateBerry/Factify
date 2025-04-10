@@ -310,6 +310,9 @@ h1 {
 #citations-list li {
     margin-bottom: 5px;
 }
+a {
+  color: #4C90C7;
+}
 
 #citations-list a {
     color: #4C90C7;

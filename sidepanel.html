@@ -11,22 +11,36 @@
   <div id="header">
     <h1>Factify.</h1>
   </div>
-  <div id="button-container">
+  <div id="button-container" style="display: none;">
     <!-- Button for scanning the webpage -->
     <button id="scan-webpage-button" class="api-key-submit">Scan Webpage</button>
     <!-- Button for accessing community hall -->
     <button id="community-hall-button" class="api-key-submit">Community Hall</button>
   </div>
   
-  <p id="selection-tip">Or just select text and hit fact check below the selection.</p>
+  <p id="selection-tip" style="display: none;">Or just select text and hit fact check below the selection.</p>
   
   <!-- API Key Form -->
   <div id="api-key-container" style="display: none;">
-    <p class="api-key-message">Please enter your Perplexity API key to analyze text:</p>
+    <p class="api-key-message">
+      Please enter your Perplexity AI API key to analyze text:
+    </p>
     <form id="api-key-form">
       <input type="password" id="api-key-input" placeholder="Enter API Key" required>
       <button type="submit" class="api-key-submit">Submit</button>
     </form>
+    <div id="api-key-instructions" style="text-align: center;">
+      <ol style="display: inline-block; text-align: left;">
+        <li>Visit the <a href="https://www.perplexity.ai" target="_blank" rel="noopener noreferrer">Perplexity website</a> and log in to your account.</li>
+        <li>Navigate to the API section in your account settings.</li>
+        <li>Generate a new API key and copy it.</li>
+        <li>Paste the API key into the input box above.</li>
+      </ol>
+      <p style="font-size: 0.85em; color: gray; margin-top: 10px;">
+        For more info, refer to documentation <a href="https://www.perplexity.ai/help-center/en/articles/10352995-api-settings" target="_blank" rel="noopener noreferrer">here</a>
+      </p>
+      <p style="font-size: 0.85em; color: gray; margin-top: 10px;">Your key is stored securely and is never passed on to us or anyone else</p> 
+    </div>
   </div>
   
   <!-- Loading Indicator -->
