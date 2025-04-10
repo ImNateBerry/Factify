@@ -19,12 +19,9 @@
         }
     },
     "permissions": [
-        "activeTab",
-        "scripting",
-        "nativeMessaging",
         "sidePanel",
         "storage",
-        "contextMenus"
+        "tabs"
     ],
     "host_permissions": [
         "<all_urls>"
