@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const scanWebpageButton = document.getElementById('scan-webpage-button');
   const communityHallButton = document.getElementById('community-hall-button');
   const saveToCommunityButton = document.getElementById('save-to-community');
+  const buttonContainer = document.getElementById('button-container');
+  const selectionTip = document.getElementById('selection-tip');
 
   // Current analysis results and selected text
   let currentAnalysisResults = null;
@@ -21,28 +23,35 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.get(['perplexityApiKey', 'shouldAnalyze', 'selectedText', 'analysisResults'], (data) => {
       if (data.perplexityApiKey) {
         apiKeyContainer.style.display = 'none';
-        
+        buttonContainer.style.display = 'flex';
+        selectionTip.style.display = 'block';
+        factCheckContainer.style.display = 'none'; // Ensure results are hidden initially
+        saveToCommunityButton.style.display = 'none';
+
         // Only analyze if the shouldAnalyze flag is true
         if (data.shouldAnalyze) {
+          // Analysis will start, but keep buttons/tip visible
           getSelectedTextAndAnalyze(data.perplexityApiKey);
         } else {
           // If not analyzing, check if results exist for the current text
           const selectedText = data.selectedText || '';
           if (selectedText && data.analysisResults && data.analysisResults[selectedText]) {
+            // Found existing results, show them
             currentSelectedText = selectedText;
             currentAnalysisResults = data.analysisResults[selectedText];
             displayResults(data.analysisResults[selectedText]);
             factCheckContainer.style.display = 'block'; // Show container with existing results
             saveToCommunityButton.style.display = 'block';
-          } else {
-            factCheckContainer.style.display = 'none'; // Keep container hidden
-            saveToCommunityButton.style.display = 'none';
+            // Keep buttons/tip visible
           }
+          // Else: No analysis needed, no existing results -> buttons and tip remain visible
         }
       } else {
         apiKeyContainer.style.display = 'block';
         factCheckContainer.style.display = 'none'; // Keep container hidden
         saveToCommunityButton.style.display = 'none';
+        buttonContainer.style.display = 'none'; // Hide buttons
+        selectionTip.style.display = 'none'; // Hide tip
       }
     });
   }
@@ -55,23 +64,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (apiKey) {
         chrome.storage.local.set({ perplexityApiKey: apiKey }, () => {
           apiKeyContainer.style.display = 'none';
+          // Show buttons and tip after key submission
+          buttonContainer.style.display = 'flex';
+          selectionTip.style.display = 'block';
+          factCheckContainer.style.display = 'none'; // Ensure results hidden
+          saveToCommunityButton.style.display = 'none';
+
           // After submitting key, check if analysis should run or if existing results should be shown
           chrome.storage.local.get(['shouldAnalyze', 'selectedText', 'analysisResults'], (data) => {
             if (data.shouldAnalyze) {
+              // Analysis will start, keep buttons/tip visible
               getSelectedTextAndAnalyze(apiKey);
             } else {
               // Check for existing results similar to checkApiKey
               const selectedText = data.selectedText || '';
               if (selectedText && data.analysisResults && data.analysisResults[selectedText]) {
+                 // Found existing results, show them
                 currentSelectedText = selectedText;
                 currentAnalysisResults = data.analysisResults[selectedText];
                 displayResults(data.analysisResults[selectedText]);
                 factCheckContainer.style.display = 'block';
                 saveToCommunityButton.style.display = 'block';
-              } else {
-                factCheckContainer.style.display = 'none';
-                saveToCommunityButton.style.display = 'none';
+                // Keep buttons/tip visible
               }
+              // Else: No analysis needed, no existing results -> buttons and tip remain visible
             }
           });
         });
@@ -92,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         factCheckContainer.style.display = 'block';
         loadingIndicator.style.display = 'none';
         saveToCommunityButton.style.display = 'block';
+        // Keep buttons/tip visible (they should be already)
         return;
       }
 
@@ -99,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingIndicator.style.display = 'block';
         factCheckContainer.style.display = 'none';
         saveToCommunityButton.style.display = 'none';
+        // Keep buttons/tip visible
 
         // Reset the shouldAnalyze flag to prevent re-analyzing on panel reopen
         chrome.storage.local.set({ shouldAnalyze: false }, () => {
@@ -119,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingIndicator.style.display = 'block';
             factCheckContainer.style.display = 'none';
             saveToCommunityButton.style.display = 'none';
+            // Keep buttons/tip visible
             analyzeWithPerplexity(message.text, data.perplexityApiKey);
           } else {
             // If no API key, ensure fact check container is hidden
@@ -126,21 +145,37 @@ document.addEventListener('DOMContentLoaded', () => {
             factCheckContainer.style.display = 'none';
             saveToCommunityButton.style.display = 'none';
             loadingIndicator.style.display = 'none';
+            buttonContainer.style.display = 'none'; // Hide buttons if no key
+            selectionTip.style.display = 'none'; // Hide tip if no key
           }
         });
       } else if (message.text === '') {
-        // If no text is selected, hide everything related to analysis
-        factCheckContainer.style.display = 'none'; // Use display none instead of visibility
+        // If no text is selected, hide analysis results and show buttons/tip if API key exists
+        factCheckContainer.style.display = 'none'; 
         saveToCommunityButton.style.display = 'none';
         loadingIndicator.style.display = 'none';
         document.getElementById('error-container').style.display = 'none'; // Also hide errors
+        // Check if API key exists to decide whether to show buttons/tip or API key form
+        chrome.storage.local.get('perplexityApiKey', (data) => {
+            if (data.perplexityApiKey) {
+                buttonContainer.style.display = 'flex';
+                selectionTip.style.display = 'block';
+                apiKeyContainer.style.display = 'none';
+            } else {
+                buttonContainer.style.display = 'none';
+                selectionTip.style.display = 'none';
+                apiKeyContainer.style.display = 'block';
+            }
+        });
       }
     }
   });
   
   // Call Perplexity API
-  function analyzeWithPerplexity(text, apiKey) {
-    const prompt = `Fact check the following:\n\n${text}`;
+  function analyzeWithPerplexity(text, apiKey, keyToSaveAs = null) {
+    const prompt = `Fact check the following:
+
+${text}`;
     
     const options = {
       method: 'POST',
@@ -205,14 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingIndicator.style.display = 'none';
         factCheckContainer.style.display = 'block';
         saveToCommunityButton.style.display = 'block';
+        // Keep buttons/tip visible
         currentAnalysisResults = data;
 
-        // Save the analysis results in chrome.storage.local
+        // Determine the key to use for saving
+        const saveKey = keyToSaveAs || text;
+
+        // Save the analysis results in chrome.storage.local using the correct key
         chrome.storage.local.get('analysisResults', (storageData) => {
           const analysisResults = storageData.analysisResults || {};
-          analysisResults[text] = data;
+          analysisResults[saveKey] = data; // Use saveKey
           chrome.storage.local.set({ analysisResults }, () => {
-            console.log('Analysis results saved.');
+            console.log('Analysis results saved under key:', saveKey);
           });
         });
 
@@ -223,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingIndicator.style.display = 'none';
         factCheckContainer.style.display = 'none'; // Ensure container is hidden on error
         saveToCommunityButton.style.display = 'none';
+        // Keep buttons/tip visible even on error if key exists
         let errorMessage = error.message;
         document.getElementById('error-message').innerHTML = `Error connecting to Perplexity API. Please check your API key and try again.<br><small>${errorMessage}</small>`;
         document.getElementById('error-container').style.display = 'block';
@@ -288,48 +328,70 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Display results in the UI
   function displayResults(data) {
-    if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) {
-      document.getElementById('error-message').textContent = 'Invalid response from API';
-      document.getElementById('error-container').style.display = 'block';
-      factCheckContainer.style.display = 'none'; // Hide container on invalid data
-      saveToCommunityButton.style.display = 'none';
-      return;
-    }
-    
-    const content = data.choices[0].message.content;
-    const { truthScore, biasScore, reasoning } = extractJSON(content);
-    
-    // Update the circular charts
-    updateChart('truth-chart', truthScore);
-    updateChart('bias-chart', biasScore);
-    
-    // Update text percentage values
-    document.querySelector('.circular-chart.orange text').textContent = `${truthScore}%`;
-    document.querySelector('.circular-chart.green text').textContent = `${biasScore}%`;
-    
-    // Get citations array for formatting inline references
-    const citations = data.citations && data.citations.length > 0 ? data.citations : [];
-    
-    // Display reasoning with clickable citations
-    reasoningContent.innerHTML = formatReasoning(reasoning, citations);
-    
-    // Display citations as numbered list
-    if (citations.length > 0) {
-      citationsList.innerHTML = '';
-      citations.forEach((citation, index) => {
-        const li = document.createElement('li');
-        li.setAttribute('value', index + 1); // Set the list item number
-        const a = document.createElement('a');
-        a.href = citation;
-        a.textContent = citation;
-        a.target = '_blank';
-        li.appendChild(a);
-        citationsList.appendChild(li);
-      });
-      document.getElementById('citations-container').style.display = 'block';
-    } else {
-      document.getElementById('citations-container').style.display = 'none';
-    }
+    // Retrieve the full analysis data including the saved status
+    chrome.storage.local.get('analysisResults', (storageData) => {
+      const analysisResults = storageData.analysisResults || {};
+      const fullResultData = analysisResults[currentSelectedText]; // Get data using current key
+
+      if (!fullResultData || !fullResultData.choices || !fullResultData.choices[0] || !fullResultData.choices[0].message) {
+        document.getElementById('error-message').textContent = 'Invalid response from API';
+        document.getElementById('error-container').style.display = 'block';
+        factCheckContainer.style.display = 'none'; // Hide container on invalid data
+        saveToCommunityButton.style.display = 'none';
+        return;
+      }
+
+      // Buttons/tip should remain visible
+      document.getElementById('error-container').style.display = 'none'; // Hide error if showing results
+      factCheckContainer.style.display = 'block'; // Show results container
+      saveToCommunityButton.style.display = 'block'; // Show save button
+
+      const content = fullResultData.choices[0].message.content;
+      const { truthScore, biasScore, reasoning } = extractJSON(content);
+
+      // Update the circular charts
+      updateChart('truth-chart', truthScore);
+      updateChart('bias-chart', biasScore);
+
+      // Update text percentage values
+      document.querySelector('.circular-chart.orange text').textContent = `${truthScore}%`;
+      document.querySelector('.circular-chart.green text').textContent = `${biasScore}%`;
+
+      // Get citations array for formatting inline references
+      const citations = fullResultData.citations && fullResultData.citations.length > 0 ? fullResultData.citations : [];
+
+      // Display reasoning with clickable citations
+      reasoningContent.innerHTML = formatReasoning(reasoning, citations);
+
+      // Display citations as numbered list
+      if (citations.length > 0) {
+        citationsList.innerHTML = '';
+        citations.forEach((citation, index) => {
+          const li = document.createElement('li');
+          li.setAttribute('value', index + 1); // Set the list item number
+          const a = document.createElement('a');
+          a.href = citation;
+          a.textContent = citation;
+          a.target = '_blank';
+          li.appendChild(a);
+          citationsList.appendChild(li);
+        });
+        document.getElementById('citations-container').style.display = 'block';
+      } else {
+        document.getElementById('citations-container').style.display = 'none';
+      }
+
+      // Check if this result is already saved and update button state
+      if (fullResultData.savedToCommunity) {
+        saveToCommunityButton.textContent = 'Saved to Community';
+        saveToCommunityButton.classList.add('saved');
+        saveToCommunityButton.disabled = true;
+      } else {
+        saveToCommunityButton.textContent = 'Post to Community Hall';
+        saveToCommunityButton.classList.remove('saved');
+        saveToCommunityButton.disabled = false;
+      }
+    });
   }
   
   // Update chart with score
@@ -397,12 +459,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingIndicator.style.display = 'block';
                 factCheckContainer.style.display = 'none'; // Hide container
                 saveToCommunityButton.style.display = 'none';
+                // Keep buttons/tip visible
                 currentSelectedText = placeholderText; // Use placeholder for display/saving key
 
                 // Reset the shouldAnalyze flag and set selectedText to the placeholder
                 // Associate the analysis results with the placeholder text
                 chrome.storage.local.set({ shouldAnalyze: false, selectedText: placeholderText }, () => {
-                   // Pass the full webpageText for analysis, but use placeholderText as the key later
+                   // Pass the full webpageText for analysis, and placeholderText as the key to save under
                    analyzeWithPerplexity(webpageText, apiKey, placeholderText); 
                 });
               } else {
@@ -415,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingIndicator.style.display = 'none'; // Hide loading
                 factCheckContainer.style.display = 'none';
                 saveToCommunityButton.style.display = 'none';
+                // Keep buttons/tip visible
             }
           }
         );
@@ -432,39 +496,48 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Disable button immediately
     saveToCommunityButton.disabled = true;
     saveToCommunityButton.textContent = 'Saving...';
-    
+    saveToCommunityButton.classList.remove('saved'); // Ensure saved class isn't prematurely added
+
     const content = currentAnalysisResults.choices[0].message.content;
     const { truthScore, biasScore, reasoning } = extractJSON(content);
-    
+
     // Get citations if available
     const citations = currentAnalysisResults.citations || [];
-    
+
     // Send to background script to handle the Supabase operation
     chrome.runtime.sendMessage({
       action: 'saveFactCheck',
       factCheck: {
-        text: currentSelectedText,
+        text: currentSelectedText, // Use the text/placeholder that was used as the key
         truth_score: truthScore,
         bias_score: biasScore,
         reasoning: reasoning,
         citations: citations
       }
     }, (response) => {
-      saveToCommunityButton.disabled = false;
-      
       if (response.success) {
         saveToCommunityButton.textContent = 'Saved to Community';
         saveToCommunityButton.classList.add('saved');
-        
-        // Reset the button after 3 seconds
-        setTimeout(() => {
-          saveToCommunityButton.textContent = 'Save to Community';
-          saveToCommunityButton.classList.remove('saved');
-        }, 3000);
+        // Button remains disabled
+
+        // Mark this fact check as saved in storage
+        chrome.storage.local.get('analysisResults', (storageData) => {
+          const analysisResults = storageData.analysisResults || {};
+          if (analysisResults[currentSelectedText]) {
+            analysisResults[currentSelectedText].savedToCommunity = true;
+            chrome.storage.local.set({ analysisResults }, () => {
+              console.log('Marked fact check as saved:', currentSelectedText);
+            });
+          }
+        });
+
       } else {
-        saveToCommunityButton.textContent = 'Save to Community';
+        // Re-enable button on error
+        saveToCommunityButton.disabled = false;
+        saveToCommunityButton.textContent = 'Post to Community Hall'; // Reset text
         alert(`Error saving to community: ${response.error || 'Unknown error'}`);
       }
     });

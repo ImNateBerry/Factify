@@ -13,6 +13,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }, () => {
       console.log('Selected text saved:', message.text);
       console.log('Should analyze:', !!message.shouldAnalyze);
+      chrome.runtime.sendMessage({ 
+        action: 'updateSidePanel', 
+        text: message.text,
+        shouldAnalyze: !!message.shouldAnalyze
+      });
     });
     chrome.windows.getCurrent({ populate: false }, (currentWindow) => {
       chrome.sidePanel.open({ windowId: currentWindow.id })
