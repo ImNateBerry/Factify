@@ -226,16 +226,14 @@ ${text}`;
     console.log('Sending request to Perplexity API with body:', options.body);
     
     fetch('https://api.perplexity.ai/chat/completions', options)
-      .then(response => {
+      .then(async (response) => {
         if (!response.ok) {
           return response.text().then(text => {
             console.error('API Error Response:', text);
             throw new Error(`API request failed: ${response.status} - ${text}`);
           });
         }
-        return response.json();
-      })
-      .then(data => {
+        const data = await response.json();
         console.log('Received API response:', data);
         loadingIndicator.style.display = 'none';
         factCheckContainer.style.display = 'block';
@@ -245,17 +243,40 @@ ${text}`;
 
         // Determine the key to use for saving
         const saveKey = keyToSaveAs || text;
+        currentSelectedText = saveKey; // Update currentSelectedText, especially for webpage scans
 
-        // Save the analysis results in chrome.storage.local using the correct key
-        chrome.storage.local.get('analysisResults', (storageData) => {
+        // Structure the result object to be saved and displayed
+        // Ensure it includes the necessary fields that displayResults expects
+        const resultToSave = {
+            ...data, // Spread the raw API response (includes choices, citations etc.)
+            savedToCommunity: false // Default save status for new analyses
+        };
+        
+        // Update the global variable with the structured result
+        currentAnalysisResults = resultToSave;
+
+        try {
+          // Get current results from storage
+          const storageData = await new Promise(resolve => chrome.storage.local.get('analysisResults', resolve));
           const analysisResults = storageData.analysisResults || {};
-          analysisResults[saveKey] = data; // Use saveKey
-          chrome.storage.local.set({ analysisResults }, () => {
-            console.log('Analysis results saved under key:', saveKey);
-          });
-        });
+          analysisResults[saveKey] = resultToSave; // Add/update the result using saveKey
 
-        displayResults(data);
+          // Wait for the save operation to complete before proceeding
+          await new Promise(resolve => chrome.storage.local.set({ analysisResults }, resolve));
+          console.log('Analysis results saved under key:', saveKey);
+
+          // Now display the results using the structured object we just saved
+          displayResults(resultToSave); // Pass the structured object
+
+        } catch (error) {
+            console.error('Error saving analysis results to storage:', error);
+            // Handle storage error appropriately
+             loadingIndicator.style.display = 'none'; // Ensure loading is hidden
+             document.getElementById('error-message').innerHTML = `Error saving analysis results. Please try again.<br><small>${error.message}</small>`;
+             document.getElementById('error-container').style.display = 'block';
+             factCheckContainer.style.display = 'none';
+             saveToCommunityButton.style.display = 'none';
+        }
       })
       .catch(error => {
         console.error('Error calling Perplexity API:', error);
@@ -327,71 +348,67 @@ ${text}`;
   }
   
   // Display results in the UI
-  function displayResults(data) {
-    // Retrieve the full analysis data including the saved status
-    chrome.storage.local.get('analysisResults', (storageData) => {
-      const analysisResults = storageData.analysisResults || {};
-      const fullResultData = analysisResults[currentSelectedText]; // Get data using current key
+  function displayResults(fullResultData) {
+    // Validate the passed data structure
+    if (!fullResultData || !fullResultData.choices || !fullResultData.choices[0] || !fullResultData.choices[0].message) {
+      console.error("Invalid or incomplete result data passed to displayResults:", fullResultData);
+      document.getElementById('error-message').textContent = 'Invalid response data received from API.';
+      document.getElementById('error-container').style.display = 'block';
+      factCheckContainer.style.display = 'none'; // Hide container on invalid data
+      saveToCommunityButton.style.display = 'none';
+      return;
+    }
 
-      if (!fullResultData || !fullResultData.choices || !fullResultData.choices[0] || !fullResultData.choices[0].message) {
-        document.getElementById('error-message').textContent = 'Invalid response from API';
-        document.getElementById('error-container').style.display = 'block';
-        factCheckContainer.style.display = 'none'; // Hide container on invalid data
-        saveToCommunityButton.style.display = 'none';
-        return;
-      }
+    // Ensure UI elements are correctly shown/hidden
+    document.getElementById('error-container').style.display = 'none'; // Hide error if showing results
+    factCheckContainer.style.display = 'block'; // Show results container
+    saveToCommunityButton.style.display = 'block'; // Show save button
 
-      // Buttons/tip should remain visible
-      document.getElementById('error-container').style.display = 'none'; // Hide error if showing results
-      factCheckContainer.style.display = 'block'; // Show results container
-      saveToCommunityButton.style.display = 'block'; // Show save button
+    const content = fullResultData.choices[0].message.content;
+    const { truthScore, biasScore, reasoning } = extractJSON(content);
 
-      const content = fullResultData.choices[0].message.content;
-      const { truthScore, biasScore, reasoning } = extractJSON(content);
+    // Update the circular charts
+    updateChart('truth-chart', truthScore);
+    updateChart('bias-chart', biasScore);
 
-      // Update the circular charts
-      updateChart('truth-chart', truthScore);
-      updateChart('bias-chart', biasScore);
+    // Update text percentage values
+    document.querySelector('.circular-chart.orange text').textContent = `${truthScore}%`;
+    document.querySelector('.circular-chart.green text').textContent = `${biasScore}%`;
 
-      // Update text percentage values
-      document.querySelector('.circular-chart.orange text').textContent = `${truthScore}%`;
-      document.querySelector('.circular-chart.green text').textContent = `${biasScore}%`;
+    // Get citations directly from the passed data
+    const citations = fullResultData.citations && fullResultData.citations.length > 0 ? fullResultData.citations : [];
 
-      // Get citations array for formatting inline references
-      const citations = fullResultData.citations && fullResultData.citations.length > 0 ? fullResultData.citations : [];
+    // Display reasoning with clickable citations
+    reasoningContent.innerHTML = formatReasoning(reasoning, citations);
 
-      // Display reasoning with clickable citations
-      reasoningContent.innerHTML = formatReasoning(reasoning, citations);
+    // Display citations as numbered list
+    if (citations.length > 0) {
+      citationsList.innerHTML = '';
+      citations.forEach((citation, index) => {
+        const li = document.createElement('li');
+        li.setAttribute('value', index + 1); // Set the list item number
+        const a = document.createElement('a');
+        a.href = citation;
+        a.textContent = citation;
+        a.target = '_blank';
+        li.appendChild(a);
+        citationsList.appendChild(li);
+      });
+      document.getElementById('citations-container').style.display = 'block';
+    } else {
+      document.getElementById('citations-container').style.display = 'none';
+    }
 
-      // Display citations as numbered list
-      if (citations.length > 0) {
-        citationsList.innerHTML = '';
-        citations.forEach((citation, index) => {
-          const li = document.createElement('li');
-          li.setAttribute('value', index + 1); // Set the list item number
-          const a = document.createElement('a');
-          a.href = citation;
-          a.textContent = citation;
-          a.target = '_blank';
-          li.appendChild(a);
-          citationsList.appendChild(li);
-        });
-        document.getElementById('citations-container').style.display = 'block';
-      } else {
-        document.getElementById('citations-container').style.display = 'none';
-      }
-
-      // Check if this result is already saved and update button state
-      if (fullResultData.savedToCommunity) {
-        saveToCommunityButton.textContent = 'Saved to Community';
-        saveToCommunityButton.classList.add('saved');
-        saveToCommunityButton.disabled = true;
-      } else {
-        saveToCommunityButton.textContent = 'Post to Community Hall';
-        saveToCommunityButton.classList.remove('saved');
-        saveToCommunityButton.disabled = false;
-      }
-    });
+    // Check saved status directly from the passed data
+    if (fullResultData.savedToCommunity) {
+      saveToCommunityButton.textContent = 'Saved to Community';
+      saveToCommunityButton.classList.add('saved');
+      saveToCommunityButton.disabled = true;
+    } else {
+      saveToCommunityButton.textContent = 'Post to Community Hall';
+      saveToCommunityButton.classList.remove('saved');
+      saveToCommunityButton.disabled = false;
+    }
   }
   
   // Update chart with score
